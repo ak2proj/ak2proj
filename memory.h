@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <memory>
 
 class memory
 {
@@ -20,7 +21,7 @@ public:
 class physical_memory : public memory
 {
 public:
-    physical_memory(std::uintmax_t size) : _size{ size }, _memory{ std::make_unique<std::uint8_t[]>(size) }
+    physical_memory(std::uintmax_t size) : _size{ size }, _memory{ new std::uint8_t[size]() }
     {
     }
     

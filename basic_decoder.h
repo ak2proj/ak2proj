@@ -6,7 +6,7 @@
 class basic_decoder
 {
 public:
-    basic_decoder(core<basic_decoder> & core) : _core{ core }
+    basic_decoder(core<basic_decoder> & core) : _core(core)
     {
     }
     

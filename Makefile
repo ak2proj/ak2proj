@@ -1,7 +1,5 @@
-CC=clang++
-LD=clang++
-CFLAGS=-c -std=c++1y -Wall -Wextra -pedantic -Werror -stdlib=libc++ -Weffc++ -Os -MD -Wno-unused-private-field
-LDFLAGS=-stdlib=libc++ -lc++abi
+CFLAGS=-c -std=c++1y -Wall -Wextra -pedantic -Werror -Os -MD -Wno-unused-private-field
+LDFLAGS=
 SOURCES=$(shell find -name "*.cpp")
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=emu
@@ -9,10 +7,10 @@ EXECUTABLE=emu
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-	$(LD) $(LDFLAGS) $(OBJECTS) -o $@
+	$(CXX) $(LDFLAGS) $(OBJECTS) -o $@
 
 .cpp.o:
-	$(CC) $(CFLAGS) $< -o $@
+	$(CXX) $(CFLAGS) $< -o $@
 
 clean:
 	@find . -name "*.o" -delete

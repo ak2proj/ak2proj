@@ -31,15 +31,26 @@ public:
     
     struct access_type
     {
-        bool read = true; // otherwise, write
-        bool data = true; // otherwise, code
+        bool read; // otherwise, write
+        bool data; // otherwise, code
     };
     
-    static constexpr access_type data_read = { true, true };
-    static constexpr access_type data_write = { false, true};
-    static constexpr access_type code_read = { true, false };
+    static inline access_type data_read()
+    {
+        return { true, true };
+    }
+    
+    static inline access_type data_write()
+    {
+        return { false, true };
+    }
+    
+    static inline access_type code_read()
+    {
+        return { true, false };
+    }
  
-    virtual std::uintmax_t translate(std::uintmax_t address, access_type type = {}) const = 0;
+    virtual std::uintmax_t translate(std::uintmax_t address, access_type type = data_read()) const = 0;
     
 protected:
     const std::shared_ptr<memory> _mem;
@@ -51,7 +62,7 @@ class amd64_mmu : public mmu
 public:
     using mmu::mmu;
     
-    virtual std::uintmax_t translate(std::uintmax_t, access_type = {}) const override
+    virtual std::uintmax_t translate(std::uintmax_t, access_type = data_read()) const override
     {
         return 0;
     }
