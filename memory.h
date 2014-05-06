@@ -74,7 +74,7 @@ private:
             throw std::out_of_range{ "out of bounds access to physical_memory" };
         }
         
-        std::cout << "[physmem] writing 0x" << value << " at 0x" << address << '\n';
+        std::cout << "[physmem] writing 0x" << static_cast<std::uintmax_t>(value) << " of size " << std::dec << sizeof(Datatype) << std::hex << " at 0x" << address << '\n';
         
         for (std::uintmax_t i = 0; i < sizeof(Datatype); ++i)
         {
@@ -90,14 +90,14 @@ private:
             throw std::out_of_range{ "out of bounds access to physical_memory" };
         }
         
-        std::cout << "[physmem] reading value from 0x" << address << '\n';
+        std::cout << "[physmem] reading value of size " << std::dec << sizeof(Datatype) << std::hex << " from 0x" << address << '\n';
         
         for (std::uintmax_t i = 0; i < sizeof(Datatype); ++i)
         {
             ret |= static_cast<std::uint64_t>(_memory[address++]) << (i * 8);
         }
         
-        std::cout << "[physmem] *0x" << address - 8 << " = 0x" << ret << '\n';
+        std::cout << "[physmem] *0x" << address - sizeof(Datatype) << " = 0x" << static_cast<std::uintmax_t>(ret) << '\n';
     }
     
     std::uintmax_t _size;

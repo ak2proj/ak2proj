@@ -52,9 +52,20 @@ public:
  
     virtual std::uintmax_t translate(std::uintmax_t address, access_type type = data_read()) const = 0;
     
+    void enable()
+    {
+        _enabled = true;
+    }
+    
+    void disable()
+    {
+        _enabled = false;
+    }
+    
 protected:
     const std::shared_ptr<memory> _mem;
     std::unordered_map<std::uintmax_t, std::uintmax_t> _registers;
+    bool _enabled = false;
 };
 
 class amd64_mmu : public mmu
@@ -62,8 +73,17 @@ class amd64_mmu : public mmu
 public:
     using mmu::mmu;
     
-    virtual std::uintmax_t translate(std::uintmax_t, access_type = data_read()) const override
+    virtual std::uintmax_t translate(std::uintmax_t address, access_type = data_read()) const override
     {
-        return 0;
+        if (_enabled)
+        {
+            // insert mmu translation code here
+            return 0;
+        }
+        
+        else
+        {
+            return address;
+        }
     }
 };
