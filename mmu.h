@@ -86,21 +86,46 @@ public:
             std::uintmax_t pde = (address >> 21) & 511;
             std::uintmax_t pte = (address >> 12) & 511;
 
+            std::uintmax_t rest = address & 4095ull;
+
             std::uintmax_t pml4 = cr3;
             std::uintmax_t pdpt;
             std::uintmax_t pd;
             std::uintmax_t pt;
             std::uintmax_t physical_address;
 
-            _mem->read(pml4+pml4e, pdpt);
-            _mem->read(pdpt+pdpte, pd);
-            _mem->read(pd+pde,     pt);
-            _mem->read(pt+pte, physical_address);
+            _mem->read(pml4+pml4e * 8, pdpt);
+            if (!(pdpt & 1))
+            {
+                throw std::runtime_error{ "not present" };
+            }
 
+            pdpt = pdpt & ~4095ull;
+            _mem->read(pdpt+pdpte * 8, pd);
+            if (!(pd & 1))
+            {
+                throw std::runtime_error{ "not present" };
+            }
 
-            //& ~0xFFF flags?
+            pd = pd & ~4095ull;
+            _mem->read(pd+pde * 8,     pt);
+            if (!(pt & 1))
+            {
+                throw std::runtime_error{ "not present" };
+            }
 
-            std::cout<<"MMU TRANSLATED virtual address:"<<std::hex<<address<<" into physical address:"<<physical_address<<std::endl;
+            pt = pt & ~4095ull;
+            _mem->read(pt+pte * 8, physical_address);
+
+            if (!(physical_address & 1))
+            {
+                throw std::runtime_error{ "not present" };
+            }
+
+            physical_address &= ~4095ull;
+            physical_address |= rest;
+
+            std::cout << "[mmu] translated 0x" << address << " to 0x" << physical_address << '\n';
 
             return physical_address;
         }
