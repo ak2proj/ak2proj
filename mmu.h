@@ -77,8 +77,32 @@ public:
     {
         if (_enabled)
         {
-            // insert mmu translation code here
-            return 0;
+            //the first address from cr3
+            std::uintmax_t cr3 = read_register(); // default - r0
+
+
+            std::uintmax_t pml4e = (address >> 39) & 511;
+            std::uintmax_t pdpte = (address >> 30) & 511;
+            std::uintmax_t pde = (address >> 21) & 511;
+            std::uintmax_t pte = (address >> 12) & 511;
+
+            std::uintmax_t pml4 = cr3;
+            std::uintmax_t pdpt;
+            std::uintmax_t pd;
+            std::uintmax_t pt;
+            std::uintmax_t physical_address;
+
+            _mem->read(pml4+pml4e, pdpt);
+            _mem->read(pdpt+pdpte, pd);
+            _mem->read(pd+pde,     pt);
+            _mem->read(pt+pte, physical_address);
+
+
+            //& ~0xFFF flags?
+
+            std::cout<<"MMU TRANSLATED virtual address:"<<std::hex<<address<<" into physical address:"<<physical_address<<std::endl;
+
+            return physical_address;
         }
         
         else

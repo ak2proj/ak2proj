@@ -1,4 +1,4 @@
 emu
 *.o
 *.d
-
+AK2PROJ.*
