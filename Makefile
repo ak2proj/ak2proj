@@ -7,7 +7,7 @@ EXECUTABLE=emu
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CXX) $(LDFLAGS) $(OBJECTS) -o $@
+	$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
 
 .cpp.o:
 	$(CXX) $(CFLAGS) $< -o $@

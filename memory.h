@@ -85,6 +85,8 @@ private:
     template<typename Datatype>
     void _read(std::uintmax_t address, Datatype & ret) const
     {
+        ret = {};
+        
         if (address > _size)
         {
             throw std::out_of_range{ "out of bounds access to physical_memory" };

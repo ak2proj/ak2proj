@@ -60,7 +60,6 @@ private:
                 break;
                     
             case instructions::load_paging_register:
-                //_done = true;
                 std::cout << "[cpu] loading 0x" << _registers[inst.source_operand().register_index()] << " into mmu primary register\n";
                 _mmu->write_register(_registers[inst.source_operand().register_index()]);
                 _mmu->enable();
