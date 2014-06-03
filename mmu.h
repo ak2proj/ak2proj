@@ -14,7 +14,7 @@ class page_fault : public std::runtime_error
 class mmu
 {
 public:
-    mmu(std::shared_ptr<memory> mem, std::uintmax_t tlb_size) : _mem{ std::move(mem)}, _tlb{ new tlb(tlb_size)}
+    mmu(std::shared_ptr<memory> mem, std::uintmax_t tlb_size) : _mem{ std::move(mem)}, _tlb{ new tlb(tlb_size) }
     {
     }
     
@@ -81,16 +81,25 @@ public:
         if (_enabled)
         {
             std::uint64_t rest = address & 4095ull;
+            std::uint64_t page = address & ~4095ull;
             
-            if (_tlb->in(address))
+            if (_tlb->in(page))
             {
-                std::uint64_t result =  _tlb->get_translation(std::uint64_t address);
+                std::cout << "[mmu] page 0x" << page << " found in tlb while translating 0x" << address << '\n';
+                std::uint64_t result = _tlb->get_translation(page);
+                
                 if (!(result & 1))
                     throw std::runtime_error{"Not present"};
-                return (result & ~4095ull) | rest;
+                    
+                result &= ~4095ull;
+                    
+                std::cout << "[mmu] saved translation for 0x" << page << " is 0x" << result << '\n';
+                return result | rest;
             }
+            
             else
             {
+                std::cout << "[mmu] 0x" << address << " not in tlb\n";
                 std::cout << "[mmu] attempting to translate 0x" << address << '\n';
             
                 //the first address from cr3
@@ -105,8 +114,6 @@ public:
                 std::uint64_t pdpte = (address >> 30) & 511;
                 std::uint64_t pde = (address >> 21) & 511;
                 std::uint64_t pte = (address >> 12) & 511;
-    
-                
         
                 std::cout << "[mmu] physical address is pml4[0x" << pml4e << "][0x" << pdpte << "][0x" << pde << "][0x" << pte << "] | 0x" << rest << '\n';
 
