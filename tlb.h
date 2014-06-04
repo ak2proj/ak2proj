@@ -12,7 +12,7 @@ struct tlb_entry
 class tlb
 {
 public:
-    tlb(std::size_t max_size): _buffer{max_size}, _max_size(max_size)
+    tlb(std::size_t max_size): _buffer{max_size}, _max_size(max_size), found_in_tlb(0), missed_in_tlb(0)
     {
     }
     
@@ -48,7 +48,22 @@ public:
         _buffer[address].is_valid = false;
     }
     
+    void found()
+    {
+        found_in_tlb++;
+    }
+    
+    void missed()
+    {
+        missed_in_tlb++;
+    }
+    
+    int getFound() { return found_in_tlb;}
+    int getMissed(){ return missed_in_tlb;}
+    
 protected:
     std::vector<tlb_entry> _buffer;
     std::size_t _max_size;
+    int found_in_tlb;
+    int missed_in_tlb;
 };

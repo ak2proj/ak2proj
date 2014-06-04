@@ -75,6 +75,12 @@ class amd64_mmu : public mmu
 public:
     using mmu::mmu;
     
+    void statistics()
+    {
+        std::cout<<"[tlb statistic] TLB usage rate is: "<<(100*_tlb->getFound()/(float)(_tlb->getFound()+_tlb->getMissed()))<<" with "<<_tlb->getFound()<<" founds and ";
+        std::cout<<_tlb->getMissed()<<" misses"<<std::endl;
+    }
+    
     virtual std::uint64_t translate(std::uint64_t address, access_type = data_read()) const override
     {
     
@@ -85,6 +91,8 @@ public:
             
             if (_tlb->in(page))
             {
+                _tlb->found();
+            
                 std::cout << "[mmu] page 0x" << page << " found in tlb while translating 0x" << address << '\n';
                 std::uint64_t result = _tlb->get_translation(page);
                 
@@ -99,6 +107,8 @@ public:
             
             else
             {
+                _tlb->missed();
+                
                 std::cout << "[mmu] 0x" << address << " not in tlb\n";
                 std::cout << "[mmu] attempting to translate 0x" << address << '\n';
             

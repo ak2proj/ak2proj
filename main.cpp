@@ -55,5 +55,6 @@ int main()
     core<basic_decoder> cpu{ mmu, phys };
     cpu.loop();
     
+    mmu->statistics();
     std::cout << "[main] ---=== exiting ===---\n";
 }
