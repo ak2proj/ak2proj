@@ -77,8 +77,8 @@ public:
     
     void statistics()
     {
-        std::cout<<"[tlb statistic] TLB usage rate is: "<<(100*_tlb->getFound()/(float)(_tlb->getFound()+_tlb->getMissed()))<<" with "<<_tlb->getFound()<<" founds and ";
-        std::cout<<_tlb->getMissed()<<" misses"<<std::endl;
+        std::cout<<std::dec<<"[tlb statistic] TLB usage rate is: "<<(100*_tlb->getFound()/(float)(_tlb->getFound()+_tlb->getMissed()))<<" with "<<_tlb->getFound()<<" founds and ";
+        std::cout<<_tlb->getMissed()<<" misses"<<std::hex<<std::endl;
     }
     
     virtual std::uint64_t translate(std::uint64_t address, access_type = data_read()) const override
