@@ -48,6 +48,8 @@ private:
             return;
         }
         
+        _instruction_ptr += inst.length();
+        
         switch (inst.type())
         {
             case instructions::read:
@@ -86,8 +88,6 @@ private:
             default:
                 throw std::runtime_error{ "attempting to execute an unknown instruction" };
         }
-        
-        _instruction_ptr += inst.length();
     }
     
     template<typename Datatype>

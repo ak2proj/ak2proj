@@ -65,4 +65,20 @@ invlpg: program pokazujący problemy z przestarzałymi wpisami w TLB
 00                              exit
 
 jmp: #PF generowane poprzez skok poza zmapowaną pamięć
+
+03 01 03 20 00 00 00 00 00 00   mov r1, 0x2003
+02 00 10 00 00 00 00 00 00 01   mov [0x1000], r1
+03 00 03 30 00 00 00 00 00 00   mov r0, 0x3003
+02 00 20 00 00 00 00 00 00 00   mov [0x2000], r0
+03 00 03 40 00 00 00 00 00 00   mov r0, 0x4003
+02 00 30 00 00 00 00 00 00 00   mov [0x3000], r0
+03 00 03 00 00 00 00 00 00 00   mov r0, 0x03
+02 00 40 00 00 00 00 00 00 00   mov [0x4000], r0
+
+03 00 00 10 00 00 00 00 00 00   mov r0, 0x1000
+04 00                           mov cr3, r0
+
+05 00 50 00 00 00 00 00 00      jmp 0x5000          ; skok poza mapowaną pamięć
+00                              exit
+
 tlbcoll: kolizja w TLB
