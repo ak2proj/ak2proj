@@ -52,7 +52,7 @@ public:
             length += 8;
         }
         
-        if (type == instructions::read || type == instructions::load)
+        if (type == instructions::read || type == instructions::load || type == instructions::invlpg || type == instructions::jump)
         {
             src = { false, _core._read<std::uint64_t>(_core.ip() + length) };
             length += 8;
