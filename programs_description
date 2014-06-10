@@ -56,7 +56,7 @@ invlpg: program pokazujący problemy z przestarzałymi wpisami w TLB
 03 00 21 43 00 00 00 00 00 00   mov r0, 0x4321
 02 00 50 00 00 00 00 00 00 00   mov [0x5000], r0    ; wygenerowanie wpisu w TLB
 03 01 03 60 00 00 00 00 00 00   mov r1, 0x6003      ; przesuwamy wpis w PT; teraz 0x1000 -> 0x6000
-02 28 40 00 00 00 00 00 00 00   mov [0x4028], r1
+02 28 40 00 00 00 00 00 00 01   mov [0x4028], r1
 03 00 43 21 00 00 00 00 00 00   mov r0, 0x2143
 02 00 50 00 00 00 00 00 00 00   mov [0x5000], r0    ; zapisze pod stary adres
 06 00 50 00 00 00 00 00 00      invlpg [0x5000]     ; usunięcie wpisu z TLB
