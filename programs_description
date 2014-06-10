@@ -1,0 +1,68 @@
+prog1: przykładowy w pełni działający program
+
+03 01 03 20 00 00 00 00 00 00   mov r1, 0x2003
+02 00 10 00 00 00 00 00 00 01   mov [0x1000], r1
+03 00 03 30 00 00 00 00 00 00   mov r0, 0x3003
+02 00 20 00 00 00 00 00 00 00   mov [0x2000], r0
+03 00 03 40 00 00 00 00 00 00   mov r0, 0x4003
+02 00 30 00 00 00 00 00 00 00   mov [0x3000], r0
+03 00 03 00 00 00 00 00 00 00   mov r0, 0x03
+02 00 40 00 00 00 00 00 00 00   mov [0x4000], r0
+
+/* Powyższy kod ustawia tablice stronnicowania.
+   PML4 = 0x1000
+   PML4[0] = PDPT = 0x2000
+   PDPT[0] = PD = 0x3000
+   PD[0] = PT = 0x4000
+   PT[0] = frame_address = 0x0
+
+   Dodatkowo ustawiane są flagi "present" i "writable". */
+
+03 00 00 10 00 00 00 00 00 00   mov r0, 0x1000  ; wczytanie adresu PML4 do r0
+04 00                           mov cr3, r0     ; wczytanie r0 do rejestru MMU, włączenie MMU
+
+; następują różne instrukcje pokazujące działanie całości
+03 00 01 00 00 00 00 00 00 00   mov r0, 0x1
+02 00 00 00 00 00 00 00 00 00   mov [0x0], r0
+01 00 00 00 00 00 00 00 00 00   mov r0, [0x0]
+00                              exit
+
+--------
+
+pf: program "pf" jest identyczny z tym powyżej z jedną różnicą - tablice nie są ustawiane na
+writable, a więc przy pierwszej próbie zapisu (mov [0x0], r0) następuje #PF
+
+--------
+
+invlpg: program pokazujący problemy z przestarzałymi wpisami w TLB
+
+03 01 03 20 00 00 00 00 00 00   mov r1, 0x2003
+02 00 10 00 00 00 00 00 00 01   mov [0x1000], r1
+03 00 03 30 00 00 00 00 00 00   mov r0, 0x3003
+02 00 20 00 00 00 00 00 00 00   mov [0x2000], r0
+03 00 03 40 00 00 00 00 00 00   mov r0, 0x4003
+02 00 30 00 00 00 00 00 00 00   mov [0x3000], r0
+03 00 03 00 00 00 00 00 00 00   mov r0, 0x03
+02 00 40 00 00 00 00 00 00 00   mov [0x4000], r0
+
+03 00 03 50 00 00 00 00 00 00   mov r0, 0x5003      ; dodatkowy wpis w PT: 0x1000 -> 0x5000
+02 28 40 00 00 00 00 00 00 00   mov [0x4028], r0
+03 00 03 40 00 00 00 00 00 00   mov r0, 0x4003      ; dodatkowy wpis w PT: 0x4000 -> 0x4000
+02 20 40 00 00 00 00 00 00 00   mov [0x4020], r0    ; w celu umożliwienia modyfikacji PT
+
+03 00 00 10 00 00 00 00 00 00   mov r0, 0x1000
+04 00                           mov cr3, r0
+
+03 00 21 43 00 00 00 00 00 00   mov r0, 0x4321
+02 00 50 00 00 00 00 00 00 00   mov [0x5000], r0    ; wygenerowanie wpisu w TLB
+03 01 03 60 00 00 00 00 00 00   mov r1, 0x6003      ; przesuwamy wpis w PT; teraz 0x1000 -> 0x6000
+02 08 40 00 00 00 00 00 00 00   mov [0x4008], r1
+03 00 43 21 00 00 00 00 00 00   mov r0, 0x2143
+02 00 50 00 00 00 00 00 00 00   mov [0x5000], r0    ; zapisze pod stary adres
+06 00 50 00 00 00 00 00 00      invlpg [0x5000]     ; usunięcie wpisu z TLB
+02 00 50 00 00 00 00 00 00 00   mov [0x5000], r0    ; zapis pod poprawny adres
+
+00                              exit
+
+jmp: #PF generowane poprzez skok poza zmapowaną pamięć
+tlbcoll: kolizja w TLB
