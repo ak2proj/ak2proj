@@ -32,7 +32,7 @@ public:
         
         std::cout << "[decoder] decoding instruction at 0x" << _core.ip() << '\n';
         
-        instructions type = instruction_map[_core._read<std::uint8_t>(_core.ip())];
+        instructions type = instruction_map[_core._read<std::uint8_t>(_core.ip(), true)];
         operand dest, src;
         std::uintmax_t length = 1;
         

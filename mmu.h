@@ -3,12 +3,25 @@
 #include <exception>
 #include <cstdint>
 #include <unordered_map>
+#include <sstream>
 
 #include "memory.h"
 #include "tlb.h"
 
+std::string to_hex_string(std::uint64_t value)
+{
+    std::stringstream o;
+    o << std::hex << value;
+    return o.str();
+}
+
 class page_fault : public std::runtime_error
 {
+public:
+    page_fault(std::uint64_t address, const std::string & fault, const std::string & accesstype) : 
+        std::runtime_error{ "page fault at " + to_hex_string(address) + ": " + fault + " " + accesstype }
+    {   
+    }    
 };
  
 class mmu
@@ -77,12 +90,14 @@ public:
     
     void statistics()
     {
-        std::cout<<std::dec<<"[tlb statistic] TLB usage rate is: "<<(100*_tlb->getFound()/(float)(_tlb->getFound()+_tlb->getMissed()))<<" with "<<_tlb->getFound()<<" founds and ";
+        std::cout<<std::dec<<"[tlb statistic] TLB usage rate is: "<<(100*_tlb->getFound()/(float)(_tlb->getFound()+_tlb->getMissed()))<<" with "<<_tlb->getFound()<<" hits and ";
         std::cout<<_tlb->getMissed()<<" misses"<<std::hex<<std::endl;
     }
     
-    virtual std::uint64_t translate(std::uint64_t address, access_type = data_read()) const override
+    virtual std::uint64_t translate(std::uint64_t address, access_type at = data_read()) const override
     {
+        std::string message = at.data ? "data " : "code ";
+        message += at.read ? "read" : "write";
     
         if (_enabled)
         {
@@ -97,7 +112,14 @@ public:
                 std::uint64_t result = _tlb->get_translation(page);
                 
                 if (!(result & 1))
-                    throw std::runtime_error{"Not present"};
+                {
+                    throw page_fault{ address, "not present", message };
+                }
+                
+                if (!at.read && !(result & (1 << 1)))
+                {
+                    throw page_fault{ address, "not writable", message };
+                }
                     
                 result &= ~4095ull;
                     
@@ -137,9 +159,14 @@ public:
                 std::cout << "[mmu] pml4[0x" << pml4e << "] = 0x" << pdpt << '\n';
                 if (!(pdpt & 1))
                 {
-                    throw std::runtime_error{ "not present" };
+                    throw page_fault{ address, "not present", message };
                 }
-            
+                
+                if (!at.read && !(pdpt & (1 << 1)))
+                {
+                    throw page_fault{ address, "not writable", message };
+                }
+                                
                 pdpt &= ~4095ull;
                 std::cout << "[mmu] pdpt is at 0x" << pdpt << '\n';
             
@@ -147,9 +174,14 @@ public:
                 std::cout << "[mmu] pdpt[0x" << pdpte << "] = 0x" << pd << '\n';
                 if (!(pd & 1))
                 {
-                    throw std::runtime_error{ "not present" };
+                    throw page_fault{ address, "not present", message };
                 }
-
+                
+                if (!at.read && !(pd & (1 << 1)))
+                {
+                    throw page_fault{ address, "not writable", message };
+                }
+                    
                 pd &= ~4095ull;
                 std::cout << "[mmu] pd is at 0x" << pd << '\n';
             
@@ -157,7 +189,12 @@ public:
                 std::cout << "[mmu] pd[0x" << pde << "] = 0x" << pt << '\n';
                 if (!(pt & 1))
                 {
-                    throw std::runtime_error{ "not present" };
+                    throw page_fault{ address, "not present", message };
+                }
+                
+                if (!at.read && !(pt & (1 << 1)))
+                {
+                    throw page_fault{ address, "not writable", message };
                 }
 
                 pt &= ~4095ull;
@@ -165,13 +202,19 @@ public:
             
                 _mem->read(pt + pte * 8, physical_address);
                 std::cout << "[mmu] pt[0x" << pte << "] = 0x" << physical_address << '\n';
-                if (!(physical_address & 1))
-                {
-                    throw std::runtime_error{ "not present" };
-                }
 
                 _tlb->save_translation(address & ~4095ull, physical_address);
     
+                if (!(physical_address & 1))
+                {
+                    throw page_fault{ address, "not present", message };
+                }
+                
+                if (!at.read && !(physical_address & (1 << 1)))
+                {
+                    throw page_fault{ address, "not writable", message };
+                }
+                    
                 physical_address &= ~4095ull;
                 physical_address |= rest;
 

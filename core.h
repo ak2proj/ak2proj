@@ -20,9 +20,17 @@ public:
     {
         Decoder dec{ *this };
         
-        while (!_done)
+        try
         {
-            _execute(dec.decode());
+            while (!_done)
+            {
+                _execute(dec.decode());
+            }
+        }
+        
+        catch (std::exception & e)
+        {
+            std::cout << "[cpu] exception triggered: " << e.what() << std::endl;
         }
     }
     
@@ -75,14 +83,14 @@ private:
     template<typename Datatype>
     void _write(std::uintmax_t address, Datatype value)
     {
-        _mem->write(_mmu->translate(address), value);
+        _mem->write(_mmu->translate(address, mmu::data_write()), value);
     }
     
     template<typename Datatype>
-    Datatype _read(std::uintmax_t address)
+    Datatype _read(std::uintmax_t address, bool instruction = false)
     {
         Datatype ret{};
-        _mem->read(_mmu->translate(address), ret);
+        _mem->read(_mmu->translate(address, instruction ? mmu::code_read() : mmu::data_read()), ret);
         return ret;
     }
     
