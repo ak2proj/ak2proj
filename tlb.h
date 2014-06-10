@@ -20,12 +20,12 @@ public:
     
     bool in(std::uint64_t address)
     {
-        return _buffer[address % _max_size].is_valid && _buffer[address % _max_size].virtual_address == address; 
+        return _buffer[(address >> 12) % _max_size].is_valid && _buffer[(address >> 12) % _max_size].virtual_address == address; 
     }
     
     void save_translation(std::uint64_t address, std::uint64_t physical_address)
     {
-        _buffer[address % _max_size] = tlb_entry{ address, physical_address, true };
+        _buffer[(address >> 12) % _max_size] = tlb_entry{ address, physical_address, true };
     }
     
     std::uint64_t get_translation(std::uint64_t address)
@@ -35,7 +35,7 @@ public:
             std::terminate();
         }
         
-        return _buffer[address % _max_size].physical_address;
+        return _buffer[(address >> 12) % _max_size].physical_address;
     }
     
     void invalidate_translation(std::uint64_t address)
@@ -45,7 +45,7 @@ public:
             return;
         }
         
-        _buffer[address % _max_size].is_valid = false;
+        _buffer[(address >> 12) % _max_size].is_valid = false;
     }
     
     void found()

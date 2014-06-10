@@ -19,7 +19,7 @@ class page_fault : public std::runtime_error
 {
 public:
     page_fault(std::uint64_t address, const std::string & fault, const std::string & accesstype) : 
-        std::runtime_error{ "page fault at " + to_hex_string(address) + ": " + fault + " " + accesstype }
+        std::runtime_error{ "page fault at 0x" + to_hex_string(address) + ": " + fault + " " + accesstype }
     {   
     }    
 };
