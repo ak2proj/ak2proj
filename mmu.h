@@ -65,6 +65,7 @@ public:
     }
  
     virtual std::uint64_t translate(std::uint64_t address, access_type type = data_read()) const = 0;
+    virtual void invlpg(std::uint64_t) = 0;
     
     void enable()
     {
@@ -228,5 +229,10 @@ public:
         {
             return address;
         }
+    }
+    
+    virtual void invlpg(std::uint64_t address) override
+    {
+        _tlb->invalidate_translation(address);
     }
 };

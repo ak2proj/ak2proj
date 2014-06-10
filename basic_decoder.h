@@ -19,7 +19,9 @@ public:
             { 1, instructions::read }, 
             { 2, instructions::write }, 
             { 3, instructions::load },
-            { 4, instructions::load_paging_register }
+            { 4, instructions::load_paging_register }, 
+            { 5, instructions::jump }, 
+            { 6, instructions::invlpg }
         };
         
         static std::map<instructions, std::string> instruction_names{
@@ -27,7 +29,9 @@ public:
             { instructions::read, "read" }, 
             { instructions::write, "write" },
             { instructions::load, "load" }, 
-            { instructions::load_paging_register, "load paging register" }
+            { instructions::load_paging_register, "load paging register" },
+            { instructions::jump, "jump" }, 
+            { instructions::invlpg, "invlpg" }
         };
         
         std::cout << "[decoder] decoding instruction at 0x" << _core.ip() << '\n';

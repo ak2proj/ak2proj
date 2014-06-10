@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <fstream>
 
 #include "memory.h"
 #include "mmu.h"
@@ -11,43 +12,24 @@ int main(int argc,  char ** argv)
     std::cout << std::hex;
     
     auto phys = std::make_shared<physical_memory>(4096 * 4096);
-    auto mmu = std::make_shared<amd64_mmu>(phys, 512);
+    auto mmu = std::make_shared<amd64_mmu>(phys, 64);
     
-    std::uint8_t program[] = { 
-        // setup paging structures 
-        //  - pml4 at 4096 = 0x1000
-        //  - pdpt at 8192 = 0x2000
-        //  - pd at 0x3000
-        //  - pt at 0x4000
-        // we are mapping the very first page, i.e. 0x0 - 0x1000
-        // we will identity map it at 0x0 physical
-        // and then execute some example instructions, like load, read, write - and exit!
-        // at this stage of the project,  the mmu doesn't care about miscallenous things like "read only" pages and similar things
-        0x03, 0x01, 0x03, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // move (0x2001 | present | write) to r1
-        0x02, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, // and write it at 0x1000 - pml4 is ready
-        0x03, 0x00, 0x03, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // move (0x3000 | present | write) to r0
-        0x02, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // and write it at 0x2000 - pdpt is ready
-        0x03, 0x00, 0x03, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // move (0x4000 | present | write) to r0
-        0x02, 0x00, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // and write it at 0x3000 - pd is ready
-        0x03, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // zero the register
-        0x02, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // and write it at 0x4000 - pt is ready!
-        
-        0x03, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // move 0x1000 to r0
-        0x04, 0x00,                                                 // and load it into cr3-ish register - paging is ready!
-        
-        0x03, /*dest reg*/ 0x00, /*src addr*/ 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // set r0 to 0x1
-        0x02, /*dest addr*/ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /*src reg*/ 0x00, // write 0x1 to 0x00
-        0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // read value from 0x0 to r0
-        
-        0x00
-    };
+    if (argc < 2)
+    {
+        std::cout << "Please provide a binary file for the program.\n";
+        return 1;
+    }
+    
+    std::fstream in{ argv[1], std::ios::in | std::ios::binary };
+    std::vector<char> program;
+    std::copy(std::istreambuf_iterator<char>{ in.rdbuf() }, std::istreambuf_iterator<char>{}, std::back_inserter(program));
     
     std::cout << "[main] ---=== loading program ===---\n";
     
     std::uintmax_t address = 0;
     for (auto byte : program)
     {
-        phys->write(address++, byte);
+        phys->write(address++, static_cast<uint8_t>(byte));
     }
     
     std::cout << "[main] ---=== program loaded ===---\n";

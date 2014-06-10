@@ -6,7 +6,9 @@ enum class instructions
     read, 
     write,
     load, 
-    load_paging_register
+    load_paging_register, 
+    jump,
+    invlpg
 };
 
 class operand

@@ -73,6 +73,16 @@ private:
                 _mmu->enable();
                 break;
             
+            case instructions::jump:
+                std::cout << "[cpu] jumping to 0x" << inst.source_operand().value() << '\n';
+                _instruction_ptr = inst.source_operand().value();
+                break;
+            
+            case instructions::invlpg:
+                std::cout << "[cpu] invalidating cached page table entry for 0x" << inst.source_operand().value() << '\n';
+                _mmu->invlpg(inst.source_operand().value());
+                break;
+            
             default:
                 throw std::runtime_error{ "attempting to execute an unknown instruction" };
         }

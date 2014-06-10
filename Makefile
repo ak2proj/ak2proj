@@ -1,4 +1,4 @@
-CFLAGS=-c -std=c++1y -Wall -Wextra -pedantic -Werror -Os -MD -Wno-unused-private-field
+CFLAGS=-c -std=c++1y -Wall -Wextra -pedantic -Werror -Os -MD -Wno-unused-private-field -Wno-unused-parameter
 LDFLAGS=
 SOURCES=$(shell find -name "*.cpp")
 OBJECTS=$(SOURCES:.cpp=.o)
