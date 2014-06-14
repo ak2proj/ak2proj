@@ -6,13 +6,14 @@ struct tlb_entry
 {
     std::uint64_t virtual_address;
     std::uint64_t physical_address;
+    std::uint64_t age_counter;
     bool is_valid;
 };
 
 class tlb
 {
 public:
-    tlb(std::size_t max_size): _buffer{max_size}, _max_size(max_size), found_in_tlb(0), missed_in_tlb(0), replaced(0)
+    tlb(std::size_t max_size): _buffer{max_size * 4}, _max_size(max_size), found_in_tlb(0), missed_in_tlb(0), replaced(0)
     {
     }
     
@@ -20,18 +21,41 @@ public:
     
     bool in(std::uint64_t address)
     {
-        return _buffer[(address >> 12) % _max_size].is_valid && _buffer[(address >> 12) % _max_size].virtual_address == address; 
+        return (_buffer[(address >> 12) % _max_size].is_valid && _buffer[(address >> 12) % _max_size].virtual_address == address)
+            || (_buffer[(address >> 12) % _max_size].is_valid && _buffer[(address >> 12) % _max_size + _max_size].virtual_address == address)
+            || (_buffer[(address >> 12) % _max_size].is_valid && _buffer[(address >> 12) % _max_size + _max_size * 2].virtual_address == address)
+            || (_buffer[(address >> 12) % _max_size].is_valid && _buffer[(address >> 12) % _max_size + _max_size * 3].virtual_address == address);
     }
     
     void save_translation(std::uint64_t address, std::uint64_t physical_address)
     {
-        if (_buffer[(address >> 12) % _max_size].is_valid)
-        {
-            std::cout << "[tlb] replacing a tlb entry for 0x" << _buffer[(address >> 12) % _max_size].virtual_address << " with an entry for 0x" << address << '\n';
-            ++replaced;
-        }
+        std::uint64_t max = _buffer[(address >> 12) % _max_size].age_counter;
+        std::size_t max_i = 0;
+        std::size_t index = (address >> 12) % _max_size;
         
-        _buffer[(address >> 12) % _max_size] = tlb_entry{ address, physical_address, true };
+        for (auto i = 0ull; i < 4; ++i)
+        {
+            auto & ref = _buffer[(address >> 12) % _max_size + _max_size * i];
+            
+            if (!ref.is_valid)
+            {
+                std::cout << "[tlb] saving translation in slot " << i << " for hash " << ((address >> 12) % _max_size) << '\n';
+                
+                ref = tlb_entry{ address, physical_address, 0, true };
+                return;
+            }
+            
+            if (ref.age_counter > max)
+            {
+                max = ref.age_counter;
+                index = (address >> 12) % _max_size + _max_size * i;
+            }
+        }
+
+        std::cout << "[tlb] replacing a tlb entry for 0x" << _buffer[index].virtual_address << " with an entry for 0x" << address << '\n';
+        ++replaced;
+        std::cout << "[tlb] saving translation in slot " << max_i << " for hash " << ((address >> 12) % _max_size) << '\n';
+        _buffer[index] = tlb_entry{ address, physical_address, 0, true };
     }
     
     std::uint64_t get_translation(std::uint64_t address)
@@ -41,7 +65,28 @@ public:
             std::terminate();
         }
         
-        return _buffer[(address >> 12) % _max_size].physical_address;
+        for (auto i = 0ull; i < 4; ++i)
+        {
+            auto & ref = _buffer[(address >> 12) % _max_size + _max_size * i];
+            
+            if (ref.virtual_address == address && ref.is_valid)
+            {
+                ++ref.age_counter;
+            }
+        }
+
+        for (auto i = 0ull; i < 4; ++i)
+        {
+            auto & ref = _buffer[(address >> 12) % _max_size + _max_size * i];
+            
+            if (ref.virtual_address == address && ref.is_valid)
+            {
+                ref.age_counter = 0;
+                return ref.physical_address;
+            }
+        }
+        
+        std::terminate();
     }
     
     void invalidate_translation(std::uint64_t address)
@@ -51,7 +96,18 @@ public:
             return;
         }
         
-        _buffer[(address >> 12) % _max_size].is_valid = false;
+        for (auto i = 0ull; i < 4; ++i)
+        {
+            auto & ref = _buffer[(address >> 12) % _max_size + _max_size * i];
+            
+            if (ref.virtual_address == address && ref.is_valid)
+            {
+                ref.is_valid = false;
+                return;
+            }
+        }
+        
+        std::terminate();
     }
     
     void found()
