@@ -96,12 +96,19 @@ tlbcol: kolizja w TLB
 03 00 03 00 00 00 00 00 00 00   mov r0, 0x03
 02 00 40 00 00 00 00 00 00 00   mov [0x4000], r0
 
-02 00 42 00 00 00 00 00 00 00   mov [0x4200], r0    ; dodatkowy wpis, wywołujący konflikt w TLB (dla 64ch wpisów)
+02 00 42 00 00 00 00 00 00 00   mov [0x4200], r0    ; dodatkowy wpis dla adresu, który ma taki sam hash dla tlb o rozmiarze 64 jak 0x0
 
 03 00 00 10 00 00 00 00 00 00   mov r0, 0x1000
 04 00                           mov cr3, r0
 
 02 00 00 00 00 00 00 00 00 00   mov [0x0], r0       
-02 00 00 04 00 00 00 00 00 00   mov [0x40000], r0   ; konflikt TLB
+02 00 00 04 00 00 00 00 00 00   mov [0x40000], r0   ; próba użycia tego samego wpisu w TLB; zamiast slotu 0 dla hashu 0x0 zostanie użyty slot 1
 
 00
+
+Powyższy program nie pokazuje na jakiej zasadzie wpisy są usuwane (np. w momencie próby dodania 5tego wpisu dla tego samego skrótu adresu - TLB jest
+4-stronnie asocjacyjne) z TLB w celu zapewnienia miejsca następnemu - program byłby długi i niewiele byłoby na wyjściu widać.
+
+Usuwany jest element najstarszy, przy czym wiek elementu jest:
+1) zwiększany za każdym razem, kiedy następuje odczyt któregokolwiek wpisu z tym samym skrótem
+2) zerowany w momencie odczytu z danego elementu TLB
